@@ -39,6 +39,6 @@ const unsigned int MAX_QUEUES = 64;
 const unsigned int TOTAL_MEM_SIZE = 2048;
 const unsigned int Q_BLOCK_SIZE = 25; // Size in bytes
 const unsigned int MAX_Q_BLOCKS = 68; // Max number of blocks
-const unsigned int Q_QUEUE_SIZE = sizeof(Q);
+const unsigned int Q_QUEUE_SIZE = sizeof(Q); // Size of our Q type queue
 ```
 
