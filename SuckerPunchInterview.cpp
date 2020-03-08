@@ -23,11 +23,12 @@ Notes:
 #include <assert.h>
 
 /*
-Data Types, Structs, Constants, and Data
+Data Types, Constants, Structs, and Data
 */
 
 //Data Types
 typedef unsigned int Bit;
+typedef unsigned char QBlockHandle; // Pointer to next storage block
 
 //Byte queue type - Q
 struct Q {
@@ -47,6 +48,13 @@ const unsigned int TOTAL_MEM_SIZE = 2048;
 const unsigned int Q_BLOCK_SIZE = 25; // Size in bytes
 const unsigned int MAX_Q_BLOCKS = 68; // Max number of blocks
 const unsigned int Q_QUEUE_SIZE = sizeof(Q); // Size of our Q type queue
+
+// Storage block of type Q
+// Will always be sizeof(Q_BLOCK_SIZE)
+struct Q_Block {
+    QBlockHandle next;
+    unsigned char bytes[Q_BLOCK_SIZE - sizeof(QBlockHandle)];
+};
 
 // Resources - provided by problem description
 unsigned char data[TOTAL_MEM_SIZE]; // Total available memory for storage from 0 - TOTAL_MEM_SIZE-1
@@ -85,7 +93,7 @@ unsigned int find_next_q_index() {
 // Run first to setup memory
 void init_memory() {
     //Mark freelist as completely free
-    memset(data, '1', MAX_Q_BLOCKS);
+    memset(data, '0', MAX_Q_BLOCKS);
     //Mark Q_Queue count to 0
     data[MAX_Q_BLOCKS] = 0;
     //Init everything else to null
@@ -111,7 +119,14 @@ Q* create_queue() {
     // Allocate a queue and track how many are allocated
     int queue_ind = find_next_q_index();
     if (queue_ind != TOTAL_MEM_SIZE) {
-        Q tempQueue = Q { 1U, 128U, 16U, 128U, 16U, 128U, 3U };
+        //It is more readable to declare a Q struct like this.
+        Q tempQueue = Q();
+        tempQueue.alloc = true;
+        tempQueue.head = NULL;
+        tempQueue.headOffset = NULL;
+        tempQueue.tail = NULL;
+        tempQueue.tailOffset = NULL;
+        tempQueue.budBlock = NULL;
 
         memcpy(&data[queue_ind], &tempQueue, sizeof(Q));
         newQueue = &tempQueue;
@@ -206,6 +221,8 @@ int main()
     init_memory();
     
     Q* q0 = create_queue();
+    
+
     /*
     
     enqueue_byte(q0, 0);
