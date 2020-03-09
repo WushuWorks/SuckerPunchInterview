@@ -28,7 +28,7 @@ Data Types, Constants, Structs, and Data
 
 //Data Types
 typedef unsigned int Bit;
-typedef unsigned char QBlockHandle; // Pointer to next storage block
+typedef unsigned char QBlockHandle; // Index to next storage block
 
 
 //Byte queue type - Q
@@ -115,8 +115,8 @@ unsigned int find_memory() {
 
 // Finds the size of elements in the q block with the handle number 0-67
 unsigned int find_size(unsigned int index) {
-    unsigned int count = 0;
-    memcpy(&count, &data[index], sizeof(unsigned char)); // read in old count
+    unsigned int count = data[index];
+    //memcpy(&count, &data[index], sizeof(unsigned char)); // read in old count
     //printf("Freelist count: %d Index: %d\n", count, index);
     return count;
 }
@@ -193,20 +193,23 @@ void enqueue_byte(Q* q, unsigned char b) {
         q->empty = false; //no longer empty
     }
     else if (!q->empty){ // One element in queue
-        const unsigned int size_in_storage = find_size(q->tail);
+        const unsigned int size_offset = find_size(q->tail);
         const unsigned int mem_start_loc = calculate_q_block_index(q->tail);
-        //QBlock * curr_block = reinterpret_cast<QBlock*>(mem_start_loc);
-        if (size_in_storage >= Q_BLOCK_SIZE) { // Storage block full
+        QBlock * curr_block = reinterpret_cast<QBlock*>(&data[mem_start_loc]);
+        if (size_offset >= Q_BLOCK_SIZE-1) { // Storage block full
             //TODO: Grow list
             const unsigned int mem_location = find_memory(); // find new block or call out of memory
             const unsigned int new_mem_start_loc = calculate_q_block_index(mem_location);
-            const unsigned int curr_block_index = q->tail;
+            //const unsigned int curr_block_index = q->tail;
             //Make new Q_block
             QBlock new_block = QBlock{};
             new_block.next = NULL;
             new_block.bytes[0] = b;
             //Write tail index to `next` of current block
-            memcpy(&data[mem_start_loc + Q_BLOCK_SIZE], &curr_block_index, sizeof(unsigned char));
+            //memcpy(&data[mem_start_loc + Q_BLOCK_SIZE-1], &curr_block_index, sizeof(unsigned char));
+            //printf("before next: %d\n", curr_block->next);
+            curr_block->next = mem_location;
+            //printf("after next: %d\n", curr_block->next);
             //Write new Q_block to memory
             memcpy(&data[new_mem_start_loc], &new_block, sizeof(QBlock));
             //Update tail on Q queue struct
@@ -214,7 +217,8 @@ void enqueue_byte(Q* q, unsigned char b) {
             //inc_count(q->tail); // Update count
         }
         else { // Not full
-            memcpy(&data[mem_start_loc+size_in_storage], &b, sizeof(unsigned char)); // add new byte
+            //std::cout << size_offset << std::endl;
+            memcpy(&data[mem_start_loc+size_offset], &b, sizeof(unsigned char)); // add new byte
             //inc_count(q->tail); // Update count
         }
         inc_count(q->tail); // Update count
@@ -231,22 +235,18 @@ unsigned char dequeue_byte(Q* q) {
     unsigned char return_byte = 'n';
 
     if (!q->empty) {
-        QBlock* head_block = reinterpret_cast<QBlock*>(data[calculate_q_block_index(q->head)]);
+        QBlock* head_block = reinterpret_cast<QBlock*>(&data[calculate_q_block_index(q->head)]);
         const unsigned int block_index = q->head;
         const unsigned int block_start_loc = calculate_q_block_index(q->head);
         //Read byte from correct index in array
-        memcpy(&return_byte, &data[calculate_q_block_index(q->head)+q->head_offset], sizeof(unsigned char));
+        return_byte = head_block->bytes[q->head_offset];
 
         //Update headOffset
-        if (q->head_offset >= Q_BLOCK_SIZE-1) { //Recycle queue
+        if (q->head_offset >= Q_BLOCK_SIZE-2) { //Recycle queue in metadata - do not directly write over memory
+            const unsigned int recycle_index_value = 0;
             data[block_index] = 0; //reset freelist counter
             q->head = head_block->next; //set head to the next block
             q->head_offset = 0; //reset offset
-            //Writing over the Qblock in memory will set the next index to null and leave remaining values in place
-            QBlock new_block = QBlock{};
-            new_block.next = NULL;
-            memcpy(&data[calculate_q_block_index(q->head)], &new_block, sizeof(QBlock));
-
             //assert(false); //catch execution flow
         }
         else {
@@ -360,9 +360,14 @@ int main()
     enqueue_byte(q1, 3);
     enqueue_byte(q1, 5);
     enqueue_byte(q1, 8); //30 total elements
-    printf("%d", dequeue_byte(q0));
-    printf("%d\n", dequeue_byte(q0));
-
+    //printf("%d ", dequeue_byte(q0));
+    //printf("%d\n", dequeue_byte(q0));
+    
+    for (int i = 0; i < 29; i++) {
+        printf("%d ", dequeue_byte(q1));
+    }
+    
+    printf("%d\n", dequeue_byte(q1));
     /*
     enqueue_byte(q0, 5);
     enqueue_byte(q1, 6);
