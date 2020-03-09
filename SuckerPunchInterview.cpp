@@ -37,8 +37,8 @@ struct Q {
     Bit empty       : 1; // has this Q been assigned to before? (used because sometimes 0 is valid)
     Bit head        : 8;
     Bit tail        : 8;
-    Bit queueIndex  : 8; //Index of the q struct
-    Bit headOffset : 5;
+    Bit queue_index  : 8; //Index of the q struct
+    Bit head_offset : 5;
 
     Bit unused : 1;
 };
@@ -161,8 +161,8 @@ Q* create_queue() {
     tempQueue.empty = 1U;
     tempQueue.head = 0U;
     tempQueue.tail = 0U;
-    tempQueue.queueIndex = queue_ind;
-    tempQueue.headOffset = 0U;
+    tempQueue.queue_index = queue_ind;
+    tempQueue.head_offset = 0U;
 
     memcpy(&data[queue_ind], &tempQueue, sizeof(Q));
     newQueue = reinterpret_cast<Q*>(&data[queue_ind]);
@@ -191,8 +191,6 @@ void enqueue_byte(Q* q, unsigned char b) {
         q->head = mem_location;
         q->tail = mem_location;
         q->empty = false; //no longer empty
-        //std::cout << "q->tail: " << q->tail << " mem_start: " << mem_start_loc <<
-            //" sizeInStorage: " << find_size(q->tail) << std::endl;
     }
     else if (!q->empty){ // One element in queue
         const unsigned int size_in_storage = find_size(q->tail);
@@ -213,11 +211,13 @@ void enqueue_byte(Q* q, unsigned char b) {
             memcpy(&data[new_mem_start_loc], &new_block, sizeof(QBlock));
             //Update tail on Q queue struct
             q->tail = mem_location;
+            //inc_count(q->tail); // Update count
         }
         else { // Not full
             memcpy(&data[mem_start_loc+size_in_storage], &b, sizeof(unsigned char)); // add new byte
-            inc_count(q->tail); // Update count
+            //inc_count(q->tail); // Update count
         }
+        inc_count(q->tail); // Update count
     }
     else { 
         //catch all for debug
@@ -232,20 +232,26 @@ unsigned char dequeue_byte(Q* q) {
 
     if (!q->empty) {
         QBlock* head_block = reinterpret_cast<QBlock*>(data[calculate_q_block_index(q->head)]);
-        const unsigned int first_index = q->head;
+        const unsigned int block_index = q->head;
+        const unsigned int block_start_loc = calculate_q_block_index(q->head);
         //Read byte from correct index in array
-        memcpy(&return_byte, &data[calculate_q_block_index(q->head)+q->headOffset], sizeof(unsigned char));
+        memcpy(&return_byte, &data[calculate_q_block_index(q->head)+q->head_offset], sizeof(unsigned char));
 
         //Update headOffset
-        if (q->headOffset >= Q_BLOCK_SIZE) {
-            //Recycle queue
-            assert(false); //catch execution flow
+        if (q->head_offset >= Q_BLOCK_SIZE-1) { //Recycle queue
+            data[block_index] = 0; //reset freelist counter
+            q->head = head_block->next; //set head to the next block
+            q->head_offset = 0; //reset offset
+            //Writing over the Qblock in memory will set the next index to null and leave remaining values in place
+            QBlock new_block = QBlock{};
+            new_block.next = NULL;
+            memcpy(&data[calculate_q_block_index(q->head)], &new_block, sizeof(QBlock));
+
+            //assert(false); //catch execution flow
         }
         else {
             //increment headOffset to make the new head the next element
-            //head_block->bytes[q->headOffset] = 0;
-            //memcpy(&data[calculate_q_block_index(q->head) + q->headOffset], &data[calculate_q_block_index(q->head) + q->headOffset], sizeof(unsigned char));
-            q->headOffset += 1;
+            q->head_offset += 1;
         }
     }
     else {
@@ -326,34 +332,37 @@ int main()
     Q* q1 = create_queue();
     enqueue_byte(q1, 3);
     enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 7);
+    enqueue_byte(q1, 3);
+    enqueue_byte(q1, 5);
+    enqueue_byte(q1, 8); //30 total elements
     printf("%d", dequeue_byte(q0));
     printf("%d\n", dequeue_byte(q0));
-    /*
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7);
-    enqueue_byte(q1, 3);
-    enqueue_byte(q1, 5);
-    enqueue_byte(q1, 7); //30 total elements
+
     /*
     enqueue_byte(q0, 5);
     enqueue_byte(q1, 6);
