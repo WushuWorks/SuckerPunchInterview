@@ -38,8 +38,9 @@ struct Q {
     Bit head        : 8;
     Bit tail        : 8;
     Bit queueIndex  : 8; //Index of the q struct
+    Bit headOffset : 5;
 
-    Bit unused : 6;
+    Bit unused : 1;
 };
 
 // Constants
@@ -161,6 +162,7 @@ Q* create_queue() {
     tempQueue.head = 0U;
     tempQueue.tail = 0U;
     tempQueue.queueIndex = queue_ind;
+    tempQueue.headOffset = 0U;
 
     memcpy(&data[queue_ind], &tempQueue, sizeof(Q));
     newQueue = reinterpret_cast<Q*>(&data[queue_ind]);
@@ -226,7 +228,31 @@ void enqueue_byte(Q* q, unsigned char b) {
 
 // Pops the next byte off the FIFO queue
 unsigned char dequeue_byte(Q* q) {
-    return 'b';
+    unsigned char return_byte = 'n';
+
+    if (!q->empty) {
+        QBlock* head_block = reinterpret_cast<QBlock*>(data[calculate_q_block_index(q->head)]);
+        const unsigned int first_index = q->head;
+        //Read byte from correct index in array
+        memcpy(&return_byte, &data[calculate_q_block_index(q->head)+q->headOffset], sizeof(unsigned char));
+
+        //Update headOffset
+        if (q->headOffset >= Q_BLOCK_SIZE) {
+            //Recycle queue
+            assert(false); //catch execution flow
+        }
+        else {
+            //increment headOffset to make the new head the next element
+            //head_block->bytes[q->headOffset] = 0;
+            //memcpy(&data[calculate_q_block_index(q->head) + q->headOffset], &data[calculate_q_block_index(q->head) + q->headOffset], sizeof(unsigned char));
+            q->headOffset += 1;
+        }
+    }
+    else {
+        assert(false); // call provided function
+    }
+
+    return return_byte;
 }
 
 // Prints the current state of memory for debugging
@@ -300,6 +326,9 @@ int main()
     Q* q1 = create_queue();
     enqueue_byte(q1, 3);
     enqueue_byte(q1, 5);
+    printf("%d", dequeue_byte(q0));
+    printf("%d\n", dequeue_byte(q0));
+    /*
     enqueue_byte(q1, 7);
     enqueue_byte(q1, 3);
     enqueue_byte(q1, 5);
@@ -325,10 +354,7 @@ int main()
     enqueue_byte(q1, 3);
     enqueue_byte(q1, 5);
     enqueue_byte(q1, 7); //30 total elements
-
     /*
-    printf("%d", dequeue_byte(q0));
-    printf("%d\n", dequeue_byte(q0));
     enqueue_byte(q0, 5);
     enqueue_byte(q1, 6);
     printf("%d", dequeue_byte(q0));
