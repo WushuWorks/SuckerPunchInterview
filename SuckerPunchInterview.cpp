@@ -81,9 +81,9 @@ unsigned int find_next_q_index() {
     unsigned int return_index = TOTAL_MEM_SIZE;
 
     for (int i = 0; i < MAX_QUEUES; i++) {
-        unsigned int current_index = calculate_q_queue_index(i);
-        Q* queue = reinterpret_cast<Q*>(&data[current_index]);
-        if (!queue->alloc) {
+        unsigned int current_index = calculate_q_queue_index(i); // Find location of struct in memory
+        Q* queue = reinterpret_cast<Q*>(&data[current_index]); //Read struct from memory
+        if (!queue->alloc) { // Return index of first unallocated struct
             return_index = current_index;
             break;
         }
@@ -101,7 +101,7 @@ unsigned int find_memory() {
     unsigned int return_index = TOTAL_MEM_SIZE;
 
     for (int i = 0; i < MAX_Q_BLOCKS; i++) {   
-        if (data[i] == 0) {
+        if (data[i] == 0) { // return index of first empty element
             return_index = i;
             break;
         }
@@ -130,7 +130,7 @@ void inc_count(unsigned int index) {
 // Safely decrements the queue counter at the index
 void dec_count(unsigned int index) {
     int newCount = data[index] - 1;
-    if (newCount < 0) { newCount = 0; }
+    if (newCount < 0 || newCount > MAX_SIZE) { newCount = 0; } //
     data[index] = (unsigned int)newCount;
 }
 
@@ -168,9 +168,9 @@ Q* create_queue() {
     tempQueue.queue_index = QUEUE_IND;
     tempQueue.head_offset = 0U;
 
-    memcpy(&data[QUEUE_IND], &tempQueue, sizeof(Q));
-    newQueue = reinterpret_cast<Q*>(&data[QUEUE_IND]);
-    inc_count(MAX_Q_BLOCKS);
+    memcpy(&data[QUEUE_IND], &tempQueue, sizeof(Q)); // Write struct to memory
+    newQueue = reinterpret_cast<Q*>(&data[QUEUE_IND]); // Read location in memory
+    inc_count(MAX_Q_BLOCKS); // Increment Q queue count
 
     return newQueue;
 }
@@ -197,12 +197,12 @@ void enqueue_byte(Q* q, unsigned char b) {
         const unsigned int MEM_LOCATION  = find_memory(); // find empty memory block or call out of memory
         const unsigned int MEM_START_LOC = calculate_q_block_index(MEM_LOCATION);
         //Create QBlock, write to memory, update freelist, update q struct with latest index
-        QBlock firstBlock = QBlock{};
-        firstBlock.bytes[0] = b;
-        firstBlock.next = NULL_VALUE;
-        memcpy(&data[MEM_START_LOC], &firstBlock, sizeof(QBlock));
-        inc_count(MEM_LOCATION);
-        q->head = MEM_LOCATION;
+        QBlock first_block = QBlock{}; // Create and initialize
+        first_block.bytes[0] = b;
+        first_block.next = NULL_VALUE; // Sentinel terminal value
+        memcpy(&data[MEM_START_LOC], &first_block, sizeof(QBlock)); // Write to memory
+        inc_count(MEM_LOCATION); // Update freelist
+        q->head = MEM_LOCATION; // Set head and tail indexes
         q->tail = MEM_LOCATION;
         q->empty = false; //no longer empty
     }
@@ -215,7 +215,7 @@ void enqueue_byte(Q* q, unsigned char b) {
             const unsigned int NEW_MEM_START_LOCATION = calculate_q_block_index(MEM_LOCATION);
             //Make new Q_block
             QBlock new_block = QBlock{};
-            new_block.next = NULL_VALUE;
+            new_block.next = NULL_VALUE; // Sentinel terminal value
             new_block.bytes[0] = b;
             //Write tail index to `next` of current block
             curr_block->next = MEM_LOCATION;
@@ -240,20 +240,21 @@ unsigned char dequeue_byte(Q* q) {
     unsigned char return_byte = 'n';
 
     if (!q->empty) {
-        QBlock* head_block = reinterpret_cast<QBlock*>(&data[calculate_q_block_index(q->head)]);
+        QBlock* head_block = reinterpret_cast<QBlock*>(&data[calculate_q_block_index(q->head)]); // Read block from memory
         const unsigned int BLOCK_INDEX = q->head;
         const unsigned int BLOCK_START_LOC = calculate_q_block_index(q->head);
         //Read byte from correct index in array
         return_byte = head_block->bytes[q->head_offset];
 
         //Update headOffset
-        if (q->head_offset >= Q_BLOCK_SIZE-2 || q->head_offset+1 >= data[BLOCK_INDEX]) { //Recycle queue in metadata - do not directly write over memory
-            const unsigned int RECYCLE_VALUE_INDEX = 0;
+        if (q->head_offset >= Q_BLOCK_SIZE-2 || q->head_offset+1 >= data[BLOCK_INDEX]) { //Recycle queue - do not directly write over memory
             data[BLOCK_INDEX] = 0; //reset freelist counter
             if (head_block->next == NULL_VALUE) { //if next is null then we are empty
-                q->empty = true;
+                q->empty = true; // Set queue metadata correctly
                 q->head = 0;
+                q->head_offset = 0;
                 q->tail = 0;
+                q->queue_index = 0;
             }
             else {
                 q->head = head_block->next; //set head to the next block
@@ -337,6 +338,7 @@ int main()
     test_helper();
     init_memory();
     
+    //Mixed test
     Q* q0 = create_queue();
     enqueue_byte(q0, 0);
     enqueue_byte(q0, 1);
@@ -356,7 +358,7 @@ int main()
     printf("%d\n", dequeue_byte(q1));
     destroy_queue(q1);
 
-    
+    //Large byte number, few queue test
     unsigned int test_size = 80;
     Q * q2 = create_queue();
     Q * q3 = create_queue();
@@ -380,6 +382,7 @@ int main()
     destroy_queue(q2);
     destroy_queue(q3);
     
+    //Large queue number, few bytes test
     Q* q4 = create_queue();
     Q* q5 = create_queue();
     Q* q6 = create_queue();
