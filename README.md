@@ -2,6 +2,10 @@
 
 This is my solution to the pre-screening problem for Sucker Punch Studios for a Gameplay Programming position.
 
+### Problem
+> The problem is to write a set of functions to manage a variable number of byte queues, each with
+variable length, in a small, fixed amount of memory.
+
 # Memory Structure
 
 Since our problem description specifies we are using an array we structure our memory hierarchy using array coordinates.  
@@ -87,6 +91,9 @@ in memory that we will both dequeue from and insert to next. To link the various
 of the block it is linked to. In this way we can guarantee that insertion, deletion, and access are all constant time operations.
 
 To better accommodate our highly limited space I also built the solution around calculating positions in memory based off indexes,
- which for this application is a good way to compact memory since a pointer will be four or eight bytes but an index will only be one.
-  As mentioned before I structured the code around use of constant
+ which for this application is a good way to compact memory since a pointer will be four or eight bytes but an index will only be one. 
+ Since this solution does no unnecessary writing to memory and frees and allocates memory dynamically based on the situation we can accommodate 
+ requests for queues and stored bytes up to the queue and memory limits described in the problem description which answers the
+ question neatly.
+ 
 
