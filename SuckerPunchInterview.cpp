@@ -120,11 +120,18 @@ unsigned int find_size(unsigned int index) {
     return count;
 }
 
-// Safely updates the queue counter at the index
+// Safely increments the queue counter at the index
 void inc_count(unsigned int index) {
     unsigned int newCount = data[index] + 1;
     if (newCount > MAX_SIZE) { newCount = MAX_SIZE; }
     data[index] = newCount;
+}
+
+// Safely decrements the queue counter at the index
+void dec_count(unsigned int index) {
+    int newCount = data[index] - 1;
+    if (newCount < 0) { newCount = 0; }
+    data[index] = (unsigned int)newCount;
 }
 
 
@@ -176,6 +183,7 @@ void destroy_queue(Q* q) {
         q->head_offset = 0;
         q->queue_index = 0;
         q->tail = 0;
+        dec_count(MAX_Q_BLOCKS); //Update Q count
     }
     else {
         on_illegal_operation(); // call provided function
@@ -368,7 +376,37 @@ int main()
         printf("%d ", dequeue_byte(q3));
     }
     printf("%d\n", dequeue_byte(q3));
+
+    destroy_queue(q2);
+    destroy_queue(q3);
     
+    Q* q4 = create_queue();
+    Q* q5 = create_queue();
+    Q* q6 = create_queue();
+    Q* q7 = create_queue();
+
+    enqueue_byte(q4, 1);
+    enqueue_byte(q4, 2);
+    enqueue_byte(q5, 3);
+    enqueue_byte(q5, 4);
+    enqueue_byte(q6, 5);
+    enqueue_byte(q6, 6);
+    enqueue_byte(q7, 7);
+    enqueue_byte(q7, 8);
+
+    printf("%d ",  dequeue_byte(q4));
+    printf("%d\n", dequeue_byte(q4));
+    printf("%d ",  dequeue_byte(q5));
+    printf("%d\n", dequeue_byte(q5));
+    printf("%d ",  dequeue_byte(q6));
+    printf("%d\n", dequeue_byte(q6));
+    printf("%d ",  dequeue_byte(q7));
+    printf("%d\n", dequeue_byte(q7));
+
+    destroy_queue(q4);
+    destroy_queue(q5);
+    destroy_queue(q6);
+    destroy_queue(q7);
 
     //Examine memory
     print_mem(data);

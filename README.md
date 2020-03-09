@@ -96,4 +96,23 @@ To better accommodate our highly limited space I also built the solution around 
  requests for queues and stored bytes up to the queue and memory limits described in the problem description which answers the
  question neatly.
  
+ ## Solution Tests
+ 
+I include tests to show that the solution performs as expected under mixed conditions, such as many bytes in few queues, 
+few bytes in many queues, and mixed insertion and deletion. Running this repo as written will yeild an output like the below
+along with 
+
+```
+Hello SuckerPunch!
+0 1
+2 5
+3 4 6
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ... 68 69 70 71 72 73 74 75 76 77 78 79
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ... 68 69 70 71 72 73 74 75 76 77 78 79
+1 2
+3 4
+5 6
+7 8
+```
+ 
 
