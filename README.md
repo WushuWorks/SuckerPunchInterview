@@ -99,8 +99,8 @@ To better accommodate our highly limited space I also built the solution around 
  ## Solution Tests
  
 I include tests to show that the solution performs as expected under mixed conditions, such as many bytes in few queues, 
-few bytes in many queues, and mixed insertion and deletion. Running this repo as written will yeild an output like the below
-along with 
+few bytes in many queues, and mixed insertion and deletion. Running this repo as written will yield an output like the below
+along with the finished state of memory after execution.
 
 ```
 Hello SuckerPunch!
