@@ -179,4 +179,6 @@ Hello SuckerPunch!
 7 8
 ```
  
+## License
 
+This solution is licensed under the GNU GPL as described in the provided license file
