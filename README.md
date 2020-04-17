@@ -3,7 +3,7 @@
 This is my solution to the pre-screening problem for Sucker Punch Studios for a Gameplay Programming position.
 
 ### Problem
-Below is the problem directly as stated to me.  
+Below is the problem as stated to me.  
 
 The problem is to write a set of functions to manage a variable number of byte queues, each with
 variable length, in a small, fixed amount of memory.  
