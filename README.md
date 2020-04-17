@@ -143,7 +143,7 @@ So for example if the index 2 stores the value 12 then Q Block #3 has 12 element
 We add to our dequeue using the tail index stored in `tail` and track which element is next to be removed from the dequeue
 using the index of the Q Block in `head` and the position of the next element in `head_offset`.
 
-To preserve constant time insertion and dequeueing we do not overwrite elements and simply track what is to be dequeued next.
+To preserve constant time queueing and dequeueing we do not overwrite elements and simply track the element to be dequeued next.
 
 ## Solution Rationale
 
